@@ -21,6 +21,7 @@ def index():
 #    return 'testData'
     query = 'select * from movie'
     df = pd.read_sql_query(query,conn)
+    df.columns = ['movieId', 'title', 'movieDescription', 'image', 'poster', 'trailer', 'castings']
     json_data = df.to_json(orient='records', force_ascii=False)
     return jsonify(json_data)
 
