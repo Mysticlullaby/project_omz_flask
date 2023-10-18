@@ -19,12 +19,26 @@ cursor = conn.cursor()
 @app.route('/movieList/')
 def index():
 #    return 'testData'
+
+    # query="""select * from movie"""
+
+    # query= """select m.*
+    #             from (select movie_id, count(movie_id)as cnt 
+    #                     from view_count v
+    #                     where v.reg_date >= sysdate - 30
+    #                     group by movie_id order by cnt desc)a, movie m
+    #             where a.movie_id=m.movie_id"""
+
     query = """select m.*
-                from (select movie_id, count(movie_id)as cnt 
-                        from view_count v
-                        where v.reg_date >= sysdate - 30
-                        group by movie_id order by cnt desc)a, movie m
-                where a.movie_id=m.movie_id"""
+                from (
+                select movie_id, count(movie_id) as cnt, rank() over (order by count(movie_id) desc) as rnk
+                from view_count v
+                where v.reg_date >= sysdate - 30
+                group by movie_id
+                ) a
+                join movie m on a.movie_id = m.movie_id
+                where a.rnk <= 5"""
+
     df = pd.read_sql_query(query,conn)
     df.columns = ['movieId', 'title', 'movieDescription', 'image', 'poster', 'trailer', 'castings']
     json_data = df.to_json(orient='records', force_ascii=False)
