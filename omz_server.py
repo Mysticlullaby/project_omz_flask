@@ -40,7 +40,8 @@ def index():
 
 @app.route('/movieList/recommand')
 def recommandByCorr():
-    clientId = request.args.get('clientId', 'Mystic')
+    clientId = request.args.get('clientId')
+    # 여기요
     print('clientId: ' + clientId)
 
     query_movie = 'select * from movie'
