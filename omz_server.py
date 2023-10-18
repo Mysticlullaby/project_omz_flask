@@ -19,10 +19,16 @@ cursor = conn.cursor()
 @app.route('/movieList/')
 def index():
 #    return 'testData'
-    query = 'select * from movie'
+    query = """select m.*
+                from (select movie_id, count(movie_id)as cnt 
+                        from view_count v
+                        where v.reg_date >= sysdate - 30
+                        group by movie_id order by cnt desc)a, movie m
+                where a.movie_id=m.movie_id"""
     df = pd.read_sql_query(query,conn)
     df.columns = ['movieId', 'title', 'movieDescription', 'image', 'poster', 'trailer', 'castings', 'provider', 'kinoRating', 'rottenRating', 'imdbRating', 'staff']
     json_data = df.to_json(orient='records', force_ascii=False)
+
     return jsonify(json_data)
 
 @app.route('/curateByRating')
