@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import cx_Oracle as oracle
 import pandas as pd
 from flask_cors import CORS
@@ -16,26 +16,73 @@ conn = oracle.connect(user=user, password=pw, dsn=dsn)
 # 커서 
 cursor = conn.cursor()
 
-@app.route('/movieList/')
+@app.route('/movieList/omzPopular')
 def index():
 #    return 'testData'
-    query = """select m.*
-                from (select movie_id, count(movie_id)as cnt 
-                        from view_count v
-                        where v.reg_date >= sysdate - 30
-                        group by movie_id order by cnt desc)a, movie m
-                where a.movie_id=m.movie_id"""
+    query = """SELECT m.*
+                FROM (
+                SELECT movie_id, cnt
+                FROM (
+                    SELECT movie_id, COUNT(movie_id) AS cnt
+                    FROM view_count
+                    WHERE reg_date >= SYSDATE - 30
+                    GROUP BY movie_id
+                    ORDER BY COUNT(movie_id) DESC
+                ) a
+                WHERE ROWNUM <= 5
+                ) b
+                JOIN movie m ON b.movie_id = m.movie_id"""
     df = pd.read_sql_query(query,conn)
     df.columns = ['movieId', 'title', 'movieDescription', 'image', 'poster', 'trailer', 'castings', 'provider', 'kinoRating', 'rottenRating', 'imdbRating', 'staff']
     json_data = df.to_json(orient='records', force_ascii=False)
 
     return jsonify(json_data)
 
-@app.route('/curateByRating')
-def curateByRating():
-    query = 'select * from movie'
-    movies = pd.read_sql_query(query, conn)
-    return 'processing data...'
+@app.route('/movieList/recommand')
+def recommandByCorr():
+    clientId = request.args.get('clientId', 'Mystic')
+    print('clientId: ' + clientId)
+
+    query_movie = 'select * from movie'
+    query_client = 'select * from omz_client'
+    query_review = 'select * from review'
+
+    movies = pd.read_sql_query(query_movie, conn)
+    movies.columns = ['movieId', 'title', 'movieDescription', 'image', 'poster', 'trailer', 'castings', 'provider', 'kinoRating', 'rottenRating', 'imdbRating', 'staff']
+
+    clients = pd.read_sql_query(query_client, conn)
+    clients.columns = ['clientId', 'clientPass', 'clientName', 'phone', 'email', 'gender', 'age', 'mbti', 'clientRegDate', 'grade']
+
+    reviews = pd.read_sql_query(query_review, conn)
+    reviews.columns = ['reviewId', 'movieId', 'clientId', 'reviewContent', 'rating', 'regDate', 'editDate']
+
+    data = movies.merge(reviews).merge(clients)
+    
+    recommendation_data = data[['movieId', 'clientId', 'rating']]
+    recommendation_pivot = recommendation_data.pivot(index='clientId', columns='movieId', values='rating')
+    recommendation_pivot.fillna(0, inplace=True)
+
+    reverse_data = recommendation_pivot.T.iloc[:, :]
+    corr_data = reverse_data.corr()
+
+    def movie_seen(clientId):
+        return recommendation_pivot.loc[clientId][recommendation_pivot.loc[clientId]>0]
+
+    def similar_user(clientId, n):
+        return corr_data.loc[clientId].sort_values(ascending=False)[1:n+1]
+    
+    # 'clientId'와 영화 성향이 비슷한 회원 n 명을 추려서 그 회원들이 재밌게 본 영화들 중에 아직 'clientId'가 아직 보지 않은 영화 추천 
+    def recommand_movie(clientId, n):
+        user_list = similar_user(clientId, n).index
+        user_mv_list = recommendation_data[(recommendation_data.clientId.isin(user_list)) & (recommendation_data.rating>=4)]
+        recommendee_mv_list = movie_seen(clientId)
+        unseen_id_list = set(user_mv_list['movieId']) - set(recommendee_mv_list.index)
+        return movies[movies['movieId'].isin(unseen_id_list)].reset_index(drop=True)
+    
+    recommandList = recommand_movie(clientId, 2)
+
+    # return 'what the hell...?'
+    return recommandList.to_json(orient='records', force_ascii=False)
 
 if __name__ == '__main__':  
    app.run('127.0.0.1',port=5000,debug=True)
