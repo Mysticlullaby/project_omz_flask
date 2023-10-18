@@ -16,6 +16,25 @@ conn = oracle.connect(user=user, password=pw, dsn=dsn)
 # 커서 
 cursor = conn.cursor()
 
+@app.route('/movieList/mbtiPopular')
+def mbtiPopular():
+
+    mbti = request.args.get('mbti')
+
+    query = """SELECT m.movie_id, m.title, m.movie_description, m.image, m.poster, m.trailer, m.castings, vc.view_cnt
+                FROM (
+                SELECT v.movie_id, COUNT(v.viewcount_id) AS view_cnt
+                FROM omz_client c
+                JOIN view_count v ON c.client_id = v.client_id
+                WHERE c.mbti = """ + mbti + """
+                GROUP BY v.movie_id
+                ORDER BY view_cnt DESC
+                ) vc
+                JOIN movie m ON vc.movie_id = m.movie_id
+                WHERE ROWNUM <= 5;"""
+    
+    return 'nooo'
+
 @app.route('/movieList/omzPopular')
 def index():
 #    return 'testData'
@@ -33,7 +52,64 @@ def index():
                 ) b
                 JOIN movie m ON b.movie_id = m.movie_id"""
     df = pd.read_sql_query(query,conn)
-    df.columns = ['movieId', 'title', 'movieDescription', 'image', 'poster', 'trailer', 'castings', 'provider', 'kinoRating', 'rottenRating', 'imdbRating', 'staff']
+    df.columns = ['movieId', 'title', 'movieDescription', 'image', 'poster', 'trailer', 'castings', 'provider', 'kinoRating', 'rottenRating', 'imdbRating', 'staff', 'tags', 'releaseDate', 'category']
+    json_data = df.to_json(orient='records', force_ascii=False)
+
+    return jsonify(json_data)
+
+@app.route('/movieList/netflixPopular')
+def netflixPopular():
+
+    query = """SELECT d.*
+                FROM (SELECT c.*, rownum as rm
+                    FROM (SELECT b.*
+                            FROM (SELECT m.movie_Id, count(v.movie_id) as view_count
+                                FROM movie m, view_count v
+                                WHERE m.movie_id = v.movie_id(+) AND m.provider LIKE '%넷플릭스%'
+                                GROUP BY m.movie_id
+                                ORDER BY view_count DESC)a, movie b
+                            WHERE a.movie_id = b.movie_id)c)d
+                WHERE rm <= 5"""
+    df = pd.read_sql_query(query,conn)
+    df.columns = ['movieId', 'title', 'movieDescription', 'image', 'poster', 'trailer', 'castings', 'provider', 'kinoRating', 'rottenRating', 'imdbRating', 'staff', 'tags', 'releaseDate', 'category', 'rm']
+    json_data = df.to_json(orient='records', force_ascii=False)
+
+    return jsonify(json_data)
+
+@app.route('/movieList/tvingPopular')
+def tvingPopular():
+
+    query = """SELECT d.*
+                FROM (SELECT c.*, rownum as rm
+                    FROM (SELECT b.*
+                            FROM (SELECT m.movie_Id, count(v.movie_id) as view_count
+                                FROM movie m, view_count v
+                                WHERE m.movie_id = v.movie_id(+) AND m.provider LIKE '%티빙%'
+                                GROUP BY m.movie_id
+                                ORDER BY view_count DESC)a, movie b
+                            WHERE a.movie_id = b.movie_id)c)d
+                WHERE rm <= 5"""
+    df = pd.read_sql_query(query,conn)
+    df.columns = ['movieId', 'title', 'movieDescription', 'image', 'poster', 'trailer', 'castings', 'provider', 'kinoRating', 'rottenRating', 'imdbRating', 'staff', 'tags', 'releaseDate', 'category', 'rm']
+    json_data = df.to_json(orient='records', force_ascii=False)
+
+    return jsonify(json_data)
+
+@app.route('/movieList/wavePopular')
+def wavePopular():
+
+    query = """SELECT d.*
+                FROM (SELECT c.*, rownum as rm
+                    FROM (SELECT b.*
+                            FROM (SELECT m.movie_Id, count(v.movie_id) as view_count
+                                FROM movie m, view_count v
+                                WHERE m.movie_id = v.movie_id(+) AND m.provider LIKE '%웨이브%'
+                                GROUP BY m.movie_id
+                                ORDER BY view_count DESC)a, movie b
+                            WHERE a.movie_id = b.movie_id)c)d
+                WHERE rm <= 5"""
+    df = pd.read_sql_query(query,conn)
+    df.columns = ['movieId', 'title', 'movieDescription', 'image', 'poster', 'trailer', 'castings', 'provider', 'kinoRating', 'rottenRating', 'imdbRating', 'staff', 'tags', 'releaseDate', 'category', 'rm']
     json_data = df.to_json(orient='records', force_ascii=False)
 
     return jsonify(json_data)
@@ -49,7 +125,7 @@ def recommandByCorr():
     query_review = 'select * from review'
 
     movies = pd.read_sql_query(query_movie, conn)
-    movies.columns = ['movieId', 'title', 'movieDescription', 'image', 'poster', 'trailer', 'castings', 'provider', 'kinoRating', 'rottenRating', 'imdbRating', 'staff']
+    movies.columns = ['movieId', 'title', 'movieDescription', 'image', 'poster', 'trailer', 'castings', 'provider', 'kinoRating', 'rottenRating', 'imdbRating', 'staff', 'tags', 'releaseDate', 'category']
 
     clients = pd.read_sql_query(query_client, conn)
     clients.columns = ['clientId', 'clientPass', 'clientName', 'phone', 'email', 'gender', 'age', 'mbti', 'clientRegDate', 'grade']
