@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 import cx_Oracle as oracle
 import pandas as pd
+import json
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -37,7 +38,7 @@ def mbtiPopular():
 
 @app.route('/movieList/omzPopular')
 def index():
-#    return 'testData'
+
     query = """SELECT m.*
                 FROM (
                 SELECT movie_id, cnt
@@ -110,9 +111,35 @@ def wavePopular():
                 WHERE rm <= 5"""
     df = pd.read_sql_query(query,conn)
     df.columns = ['movieId', 'title', 'movieDescription', 'image', 'poster', 'trailer', 'castings', 'provider', 'kinoRating', 'rottenRating', 'imdbRating', 'staff', 'tags', 'releaseDate', 'category', 'rm']
+    df.columns = ['movieId', 'title', 'movieDescription', 'image', 'poster', 'trailer', 'castings']
     json_data = df.to_json(orient='records', force_ascii=False)
 
     return jsonify(json_data)
+
+@app.route('/movieList/mbtiPopular')
+def mbtiPopular():
+
+    # mbti = request.args.get_json('mbti')
+    mbti = request.args.get('mbti')
+    print('mbti: ' + mbti)
+
+    mbti_query = f"""SELECT m.*
+                FROM (
+                SELECT v.movie_id, COUNT(v.viewcount_id) AS view_cnt
+                FROM omz_client c
+                JOIN view_count v ON c.client_id = v.client_id
+                WHERE c.mbti = '{mbti}'
+                GROUP BY v.movie_id
+                ORDER BY view_cnt DESC
+                ) vc
+                JOIN movie m ON vc.movie_id = m.movie_id
+                WHERE ROWNUM <= 5"""
+    df = pd.read_sql_query(mbti_query,conn)
+    df.columns = ['movieId', 'title', 'movieDescription', 'image', 'poster', 'trailer', 'castings']
+    json_data = df.to_json(orient='records', force_ascii=False)
+
+    return jsonify(json_data)
+
 
 @app.route('/movieList/recommand')
 def recommandByCorr():
