@@ -17,6 +17,25 @@ conn = oracle.connect(user=user, password=pw, dsn=dsn)
 # 커서 
 cursor = conn.cursor()
 
+@app.route('/movieList/mbtiPopular')
+def mbtiPopular():
+
+    mbti = request.args.get('mbti')
+
+    query = """SELECT m.movie_id, m.title, m.movie_description, m.image, m.poster, m.trailer, m.castings, vc.view_cnt
+                FROM (
+                SELECT v.movie_id, COUNT(v.viewcount_id) AS view_cnt
+                FROM omz_client c
+                JOIN view_count v ON c.client_id = v.client_id
+                WHERE c.mbti = """ + mbti + """
+                GROUP BY v.movie_id
+                ORDER BY view_cnt DESC
+                ) vc
+                JOIN movie m ON vc.movie_id = m.movie_id
+                WHERE ROWNUM <= 5;"""
+    
+    return 'nooo'
+
 @app.route('/movieList/omzPopular')
 def index():
 
@@ -92,6 +111,7 @@ def wavePopular():
                 WHERE rm <= 5"""
     df = pd.read_sql_query(query,conn)
     df.columns = ['movieId', 'title', 'movieDescription', 'image', 'poster', 'trailer', 'castings', 'provider', 'kinoRating', 'rottenRating', 'imdbRating', 'staff', 'tags', 'releaseDate', 'category', 'rm']
+    df.columns = ['movieId', 'title', 'movieDescription', 'image', 'poster', 'trailer', 'castings']
     json_data = df.to_json(orient='records', force_ascii=False)
 
     return jsonify(json_data)
@@ -115,7 +135,7 @@ def mbtiPopular():
                 JOIN movie m ON vc.movie_id = m.movie_id
                 WHERE ROWNUM <= 5"""
     df = pd.read_sql_query(mbti_query,conn)
-    df.columns = ['movieId', 'title', 'movieDescription', 'image', 'poster', 'trailer', 'castings', 'provider', 'kinoRating', 'rottenRating', 'imdbRating', 'staff', 'tags', 'releaseDate', 'category']
+    df.columns = ['movieId', 'title', 'movieDescription', 'image', 'poster', 'trailer', 'castings']
     json_data = df.to_json(orient='records', force_ascii=False)
 
     return jsonify(json_data)
