@@ -32,6 +32,7 @@ def index():
                 WHERE ROWNUM <= 5
                 ) b
                 JOIN movie m ON b.movie_id = m.movie_id"""
+    
     df = pd.read_sql_query(query,conn)
     df.columns = ['movieId', 'title', 'movieDescription', 'image', 'poster', 'trailer', 'castings', 'provider', 'kinoRating', 'rottenRating', 'imdbRating', 'staff']
     json_data = df.to_json(orient='records', force_ascii=False)
