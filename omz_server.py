@@ -99,7 +99,6 @@ def wavePopular():
 @app.route('/movieList/mbtiPopular')
 def mbtiPopular():
 
-    # mbti = request.args.get_json('mbti')
     mbti = request.args.get('mbti')
     print('mbti: ' + mbti)
 
