@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 import cx_Oracle as oracle
 import pandas as pd
+import ast
 import json
 from flask_cors import CORS
 
@@ -36,6 +37,7 @@ def index():
     
     df = pd.read_sql_query(query,conn)
     df.columns = ['movieId', 'title', 'movieDescription', 'image', 'poster', 'trailer', 'castings', 'provider', 'kinoRating', 'rottenRating', 'imdbRating', 'staff', 'tags', 'releaseDate', 'category']
+    df['provider'] = df['provider'].apply(ast.literal_eval)
     json_data = df.to_json(orient='records', force_ascii=False)
 
     return jsonify(json_data)
@@ -55,6 +57,7 @@ def netflixPopular():
                 WHERE rm <= 5"""
     df = pd.read_sql_query(query,conn)
     df.columns = ['movieId', 'title', 'movieDescription', 'image', 'poster', 'trailer', 'castings', 'provider', 'kinoRating', 'rottenRating', 'imdbRating', 'staff', 'tags', 'releaseDate', 'category', 'rm']
+    df['provider'] = df['provider'].apply(ast.literal_eval)
     json_data = df.to_json(orient='records', force_ascii=False)
 
     return jsonify(json_data)
@@ -74,6 +77,7 @@ def tvingPopular():
                 WHERE rm <= 5"""
     df = pd.read_sql_query(query,conn)
     df.columns = ['movieId', 'title', 'movieDescription', 'image', 'poster', 'trailer', 'castings', 'provider', 'kinoRating', 'rottenRating', 'imdbRating', 'staff', 'tags', 'releaseDate', 'category', 'rm']
+    df['provider'] = df['provider'].apply(ast.literal_eval)
     json_data = df.to_json(orient='records', force_ascii=False)
 
     return jsonify(json_data)
@@ -93,6 +97,7 @@ def wavePopular():
                 WHERE rm <= 5"""
     df = pd.read_sql_query(query,conn)
     df.columns = ['movieId', 'title', 'movieDescription', 'image', 'poster', 'trailer', 'castings', 'provider', 'kinoRating', 'rottenRating', 'imdbRating', 'staff', 'tags', 'releaseDate', 'category', 'rm']
+    df['provider'] = df['provider'].apply(ast.literal_eval)
     json_data = df.to_json(orient='records', force_ascii=False)
 
     return jsonify(json_data)
@@ -117,6 +122,7 @@ def mbtiPopular():
                 WHERE ROWNUM <= 5"""
     df = pd.read_sql_query(mbti_query,conn)
     df.columns = ['movieId', 'title', 'movieDescription', 'image', 'poster', 'trailer', 'castings', 'provider', 'kinoRating', 'rottenRating', 'imdbRating', 'staff', 'tags', 'releaseDate', 'category']
+    df['provider'] = df['provider'].apply(ast.literal_eval)
     json_data = df.to_json(orient='records', force_ascii=False)
 
     return jsonify(json_data)
@@ -134,6 +140,7 @@ def recommandByCorr():
 
     movies = pd.read_sql_query(query_movie, conn)
     movies.columns = ['movieId', 'title', 'movieDescription', 'image', 'poster', 'trailer', 'castings', 'provider', 'kinoRating', 'rottenRating', 'imdbRating', 'staff', 'tags', 'releaseDate', 'category']
+    movies['provider'] = movies['provider'].apply(ast.literal_eval)
 
     clients = pd.read_sql_query(query_client, conn)
     clients.columns = ['clientId', 'clientPass', 'clientName', 'phone', 'email', 'gender', 'age', 'mbti', 'clientRegDate', 'grade']
