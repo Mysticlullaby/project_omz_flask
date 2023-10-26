@@ -188,6 +188,6 @@ def recommandByCorr():
     return recommandList.to_json(orient='records', force_ascii=False)
 
 if __name__ == '__main__':  
-   app.run('172.16.141.26',port=5000,debug=True)
+   app.run('127.0.0.1',port=5000,debug=True)
 
 
