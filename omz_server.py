@@ -182,7 +182,7 @@ def recommandByCorr():
     
     recommandList = recommand_movie(clientId, 2)
 
-    # return 'what the hell...?'
+    # return 'what the hell....?'
     return recommandList.to_json(orient='records', force_ascii=False)
 
 if __name__ == '__main__':  
