@@ -104,7 +104,6 @@ def wavePopular():
 @app.route('/movieList/mbtiPopular')
 def mbtiPopular():
 
-    # mbti = request.args.get_json('mbti')
     mbti = request.args.get('mbti')
     print('mbti: ' + mbti)
 
@@ -183,10 +182,8 @@ def recommandByCorr():
     
     recommandList = recommand_movie(clientId, 2)
 
-    # return 'what the hell...?'
+    # return 'what the hell....?'
     return recommandList.to_json(orient='records', force_ascii=False)
 
 if __name__ == '__main__':  
-   app.run('172.16.141.26',port=5000,debug=True)
-
-
+   app.run('127.0.0.1',port=5000,debug=True)
