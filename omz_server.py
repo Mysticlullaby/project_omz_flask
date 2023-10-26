@@ -125,6 +125,17 @@ def mbtiPopular():
 
     return jsonify(json_data)
 
+@app.route('/moreList')
+def moreList():
+    platform = request.args.get('platform')
+
+    query = f"""SELECT * FROM movie WHERE provider LIKE '%{platform}%'"""
+    df = pd.read_sql_query(query,conn)
+    df.columns = ['movieId', 'title', 'movieDescription', 'image', 'poster', 'trailer', 'castings', 'provider', 'kinoRating', 'rottenRating', 'imdbRating', 'staff', 'tags', 'releaseDate', 'category']
+    df['provider'] = df['provider'].apply(ast.literal_eval)
+    json_data = df.to_json(orient='records', force_ascii=False)
+
+    return jsonify(json_data)
 
 @app.route('/movieList/recommand')
 def recommandByCorr():
